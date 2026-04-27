@@ -27,7 +27,7 @@ results = search("My Husband's Wife")          # english only
 results = search("My Husband's Wife", language=None)  # no filter
 ```
 
-Each result is a dict: `title`, `href`, `date`, `author`, `language`, `genre`.
+Each result is a dict: `title`, `href`, `date`, `author`, `language`, `genre`. (author, language, and genre are not required)
 
 ### `author.py` — list a single author's books
 
@@ -66,8 +66,8 @@ path = download(book_url, "/path/to/dir")
 ## Typical flow
 
 1. Call `search(...)` or `by_author(...)` to get candidates.
-2. Pick the `href` you want.
-3. Pass it to `download(href, dest_dir)`.
+2. Pick the `href(s)` you want.
+3. Download the epubs with `downloader.py.
 
 ## License
 
