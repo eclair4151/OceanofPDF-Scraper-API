@@ -80,3 +80,8 @@ results = download_many(urls, "/path/to/dir", max_workers=16)
 ## License
 
 [MIT](LICENSE.md)
+
+---
+
+Inspired by https://github.com/Krishna-Sivakumar/opdf-scraper
+
