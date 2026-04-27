@@ -1,6 +1,6 @@
 # Ocean of PDF Scraper
 
-Search [Ocean of PDF](https://oceanofpdf.com/), browse an author's catalog, and download epubs (concurrently).
+Search [Ocean of PDF](https://oceanofpdf.com/), browse an author's catalog, and download epubs.
 
 ## Install
 
@@ -25,8 +25,8 @@ Programmatic use:
 ```python
 from search import search
 
-results = search("My Husband's Wife")                       # english only
-results = search("My Husband's Wife", language=None)        # no filter
+results = search("My Husband's Wife")                         # english only
+results = search("My Husband's Wife", language=None)          # no filter
 results = search("My Husband's Wife", download_to="./books")  # also downloads every hit
 ```
 
@@ -50,9 +50,12 @@ results = by_author("Alice Feeney", download_to="./books")  # grab the whole cat
 
 ### `downloader.py` — download epub(s)
 
-Takes one or more book page URLs (the `href` from a search/author result, e.g. `https://oceanofpdf.com/authors/alice-feeney/pdf-epub-my-husbands-wife-download/`), finds the epub form on each page, posts it to `Fetching_Resource.php`, follows the meta-refresh to the CDN, and writes the file to disk. PDF-only books raise `RuntimeError` — epub only.
+Takes one or more book page URLs (the `href` from a search/author result, e.g. `https://oceanofpdf.com/authors/alice-feeney/pdf-epub-my-husbands-wife-download/`), finds the epub form on each page, posts it to `Fetching_Resource.php`, follows the meta-refresh to the CDN, and writes the file to disk.
 
-Multiple URLs are downloaded concurrently (default 8 workers).
+Two filters are applied:
+
+- **Pre-download**: any URL without `epub` in its path is skipped (PDF-only listing).
+- **Post-download**: each saved epub is opened and its `dc:language` tag is checked. Files whose language doesn't contain the requested code are deleted. Default is `"en"` (matches `en`, `en-US`, `en-UK`, `eng`, …). Files missing a language tag are kept. Pass `language=None` to disable.
 
 ```shell
 python3 downloader.py <destination_dir> <book_url> [<book_url> ...]
@@ -61,16 +64,29 @@ python3 downloader.py <destination_dir> <book_url> [<book_url> ...]
 Programmatic use:
 
 ```python
-from downloader import download, download_many
+from downloader import download, download_many, epub_language
 
-path = download(book_url, "/path/to/dir")              # one book, returns saved path
-results = download_many(urls, "/path/to/dir")          # parallel; returns [(url, path, error), ...]
-results = download_many(urls, "/path/to/dir", max_workers=16)
+path = download(book_url, "/path/to/dir")               # one book, returns saved path
+results = download_many(urls, "/path/to/dir")           # default lang='en'
+results = download_many(urls, "/path/to/dir", language="es")
+results = download_many(urls, "/path/to/dir", language=None)  # no language check
+lang = epub_language("/path/to/file.epub")              # 'en', 'en-US', None, ...
 ```
+
+Errors during a `download_many` run don't abort the batch — they're logged per-URL and recorded in the returned `(url, path, error)` tuples.
 
 ### `parser.py` — shared internals
 
 `parse_page`, `paginate`, `filter_language`, `print_results`. Used by `search.py` and `author.py`.
+
+### `check_languages.py` — audit downloaded epubs
+
+Walks a folder and prints each epub's `dc:language` value. Useful for spot-checking a directory of downloads.
+
+```shell
+python3 check_languages.py            # defaults to ./Books
+python3 check_languages.py ./somedir
+```
 
 ## Typical flow
 
@@ -84,4 +100,3 @@ results = download_many(urls, "/path/to/dir", max_workers=16)
 ---
 
 Inspired by https://github.com/Krishna-Sivakumar/opdf-scraper
-

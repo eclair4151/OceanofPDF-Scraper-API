@@ -31,4 +31,5 @@ if __name__ == "__main__":
     p.add_argument("--language", default="english", help="language filter (default: english)")
     args = p.parse_args()
     results = by_author(" ".join(args.name), language=args.language, download_to=args.download)
+    # results = by_author("Colleen Hoover", language='english', download_to='./Books/')
     print_results(results)
