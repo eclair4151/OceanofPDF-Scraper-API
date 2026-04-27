@@ -52,16 +52,22 @@ def download(book_url, destination):
 def download_many(book_urls, destination, max_workers=8):
     """Download multiple books concurrently.
 
+    Prints progress per finished item.
     Returns a list of (url, path_or_None, error_or_None) tuples.
     """
+    book_urls = list(book_urls)
     results = []
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+    workers = min(max_workers, len(book_urls)) or 1
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(download, url, destination): url for url in book_urls}
         for future in as_completed(futures):
             url = futures[future]
             try:
-                results.append((url, future.result(), None))
+                path = future.result()
+                print(f"saved: {path}")
+                results.append((url, path, None))
             except Exception as e:
+                print(f"error ({url}): {e}")
                 results.append((url, None, e))
     return results
 
@@ -70,13 +76,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("usage: python downloader.py <destination> <book_url> [<book_url> ...]")
         sys.exit(1)
-    destination = sys.argv[1]
-    urls = sys.argv[2:]
-    with ThreadPoolExecutor(max_workers=min(8, len(urls))) as pool:
-        futures = {pool.submit(download, url, destination): url for url in urls}
-        for future in as_completed(futures):
-            url = futures[future]
-            try:
-                print(f"saved: {future.result()}")
-            except Exception as e:
-                print(f"error ({url}): {e}")
+    download_many(sys.argv[2:], sys.argv[1])
